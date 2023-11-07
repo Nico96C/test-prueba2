@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import confetti from "canvas-confetti"
 
@@ -6,12 +6,13 @@ import { Square } from './components/Square.jsx'
 import { Turns } from './constants.js'
 import { checkWinnerFrom, checkEndGame } from './logic/board.js'
 import { WinnerModal } from './components/WinnerModal.jsx'
+import { saveGameStorage, resetGameStorage } from './logic/storage/index.js'
 
 function App() {
   const [board, setBoard] = useState(() => {
     const boardFromStorage = window.localStorage.getItem('board')
     return boardFromStorage ? JSON.parse(boardFromStorage) : Array(9).fill(null) //Lenta Lectura si esta en la lectura de todo el body!
-    
+
     // Otra opcion con if()!
     //if(boardFromStorage) return JSON.parse(boardFromStorage)
     //return Array(9).fill(null)
@@ -39,17 +40,19 @@ function App() {
     //Cambia turno
     const newTurn = turn === Turns.X ? Turns.O : Turns.X
     setTurn(newTurn)
-
+    
     //Guardar partida
-    window.localStorage.setItem('board', JSON.stringify(newBoard))
-    window.localStorage.setItem('turn', newTurn)
+    saveGameStorage({
+      board: newBoard,
+      turn: newTurn
+    });
 
     //Vamos a hacer un check para ver si hay ganador
     const newWinner = checkWinnerFrom(newBoard)
     if (newWinner) {
       confetti()
       setWinner(newWinner)
-    } else if(checkEndGame(newBoard)){
+    } else if (checkEndGame(newBoard)) {
       setWinner(false)
     } //mirar si hay un ganador
 
@@ -60,9 +63,14 @@ function App() {
     setTurn(Turns.X)
     setWinner(null)
 
-    window.localStorage.removeItem('board')
-    window.localStorage.removeItem('turn')
+    resetGameStorage();
   }
+
+  useEffect(() => {
+    //Se ejecuta siempre 1 vez
+    //Primero funcion a realizar -> luego Array de dependencias.
+
+  })
 
   return (
     <main className='board'>
@@ -96,7 +104,7 @@ function App() {
         </Square>
       </section>
 
-        <WinnerModal resetGame={resetGame} winner={winner} />
+      <WinnerModal resetGame={resetGame} winner={winner} />
 
     </main>
   )
